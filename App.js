@@ -1,31 +1,31 @@
-import { StyleSheet, Text, TextInput, Button, View} from 'react-native';
+import { StyleSheet, Text, TextInput, Button, View, FlatList, ActivityIndicator} from 'react-native';
 import { useState, useEffect } from 'react';
 import firebase from './src/config/firebase';
+import Listagem from './src/Listagem';
 export default function App() {
     const [name, setName] = useState('');
     const [idade, setIdade] = useState('');
-
+    const [loading, setLoading] = useState(true);
+    const [users, setUsers] = useState([]);
     useEffect(() => { 
 
-      //async function setData() {
-      // Create a reference to the database service
-      // await firebase.database().ref('type').set('Client')
+      async function setData() {
+    
+        await firebase.database().ref('/user').on('value', (snapshot) => {
+          setUsers([]);
+          snapshot.forEach((child) => {
+            let data = {
+              id: child.key,
+              name: child.val().name,
+              idade: child.val().idade
+            }
+            setUsers(oldArray => [...oldArray, data].reverse());
+          })
+          setLoading(false);
+        })
 
-      //Remove
-      // await firebase.database().ref('type').remove();
-
-      // Create with reference
-      /*  await firebase.database().ref('user').child(3).set({
-          name: 'João',
-          idade: '30',
-          cargo: 'Programador Junior'
-        })*/
-      //Update
-      /*  await firebase.database().ref('user').child(3).update({
-          name: 'João Pacheco',
-        })*/
-      //}
-      //setData()
+      }
+      setData()
     }, []);
 
     async function saveData() {
@@ -45,6 +45,8 @@ export default function App() {
         
       }
     }
+
+    console.log(users);
 
   return (
     <View style={styles.container}>
@@ -67,6 +69,15 @@ export default function App() {
         onPress={saveData}
         style={styles.button}
       />
+    {loading ? 
+    <ActivityIndicator size="large" color="#0000ff" />
+     :
+     <FlatList
+        keyExtractor={(item) => item.id}
+        data={users}
+        renderItem = {({item}) => ( <Listagem data={item} />)}
+      />
+      }
     </View>
   );
 }
