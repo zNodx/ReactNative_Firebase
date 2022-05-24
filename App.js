@@ -1,34 +1,48 @@
-import { StyleSheet, Text, TextInput, Button, View, FlatList, ActivityIndicator} from 'react-native';
+import { StyleSheet, Text, TextInput, Button, View, FlatList, ActivityIndicator, Alert} from 'react-native';
 import { useState, useEffect } from 'react';
 import firebase from './src/config/firebase';
 import Listagem from './src/Listagem';
 export default function App() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [user, setUser] = useState('');
+    const [name, setName] = useState('');
+    const [lastName, setLastName] = useState('');
 
     async function createUser() {
-      await firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(( value ) => {
-          alert('Bem vindo '+ value.user.email);
-          setUser(value.user.email);
+      await firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then((value) => {
+          firebase.database().ref('users').child(value.user.uid).set({
+            name: name,
+            lastName: lastName
+          })
+          alert('Usuário criado com sucesso!');
           setEmail('');
           setPassword('');
-        }).catch((error) => {
-          alert(error.message);
-          return;
-        }
-      )
-    
+          setName('');
+          setLastName('');
+        }).catch(error => {
+          alert(error.message)
+        })
+      
     }
 
-    async function logout() {
-        await firebase.auth().signOut();
-        setUser('');
-        alert('Você saiu');
-    }
+
   return (
     <View style={styles.container}>
+      <Text style={styles.text}>First name</Text>
+      <TextInput style={styles.input}
+        placeholder="Your first name"
+        underlineColorAndroid={'transparent'}
+        onChangeText={(text) => setName(text)}
+        value={name}
+      /> 
+      <Text style={styles.text}>Last name</Text>
+      <TextInput style={styles.input}
+        placeholder="Your last name"
+        underlineColorAndroid={'transparent'}
+        onChangeText={(text) => setLastName(text)}
+        value={lastName}
+      />
       <Text style={styles.text}>Email</Text>
       <TextInput style={styles.input}
         placeholder="example@gmail.com"
@@ -44,18 +58,11 @@ export default function App() {
         value={password}
       />
       <Button 
-        title="Login"
+        title="Create new User"
         style={styles.button}
         color="#b4f737"
         onPress={createUser}
       />
-      <Text style={styles.textUser}>{user}</Text>
-      { user && <Button
-        title="Logout"
-        color="#fa4922"
-        style={styles.button}
-        onPress={logout}
-      />}
     </View>
   );
 }
